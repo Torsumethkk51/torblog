@@ -1,28 +1,13 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import type { Element, ElementType, Post, Size } from "../types/post";
+import AppLayout from "../Layout";
 
 export default function CreatePost() {
-
-  {/*
-    
-    {
-      element: "heading1-6" | "paragraph" | "link" | "list",
-      value: content
-    } 
-
-    function changeToHTML() return html element
-
-    map each and return changeToHTML()
-    
-  */}
-
   const [post, setPost] = useState<Post>({
     title: "",
     description: "",
-    content: [{ element: "heading", size: 1, value: "abcde" },]
+    content: []
   });
-
-  useEffect(() => console.log(post), [post]);
 
   function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
     setPost({
@@ -195,11 +180,18 @@ export default function CreatePost() {
       case "list":
         return (
           <div key={idx}>
-            <button
-              onClick={() => addPostListItem(idx)}
-            >
-              Add Item
-            </button>
+            <div>
+              <button
+                onClick={() => addPostListItem(idx)}
+              >
+                Add Item
+              </button>
+              <button
+                  onClick={() => removePostElement(idx)}
+                >
+                  Remove
+                </button>
+            </div>
             <ul>
               {[...element.value].map((item, itemIndex) => {
                 console.log(item);
@@ -227,16 +219,12 @@ export default function CreatePost() {
   }
   
   return (
-    <>
+    <AppLayout>
       <main>
         <h1>Let's create your post!</h1>
 
         <div className="tools-bar">
-          {/* 
 
-            button -> add a blog content element (function)
-
-          */}
           <button onClick={() => addPostElement("heading", 1)}>
             Heading
           </button>
@@ -273,6 +261,6 @@ export default function CreatePost() {
           })}
         </section>
       </main>
-    </>
+    </AppLayout>
   );
 }

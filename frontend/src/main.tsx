@@ -4,20 +4,15 @@ import './index.css'
 import App from './App.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import CreatePost from './pages/CreatePost.tsx'
-import AppLayout from './Layout.tsx'
-
-function wrapLayout(pageComponent: React.ReactNode) {
-  return <AppLayout>{pageComponent}</AppLayout>
-}
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: wrapLayout(<App/>)
+    element: <App/>
   },
   {
     path: "/create-post",
-    element: wrapLayout(<CreatePost/>)
+    element: <CreatePost/>
   }
 ]);
 

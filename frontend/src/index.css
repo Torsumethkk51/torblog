@@ -1,5 +1,28 @@
+@font-face {
+  font-family: "Sarabun";
+  src: url("./assets/fonts/Sarabun-Regular.woff2") format("woff2");
+  font-weight: 400; /* Regular */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Sarabun";
+  src: url("./assets/fonts/Sarabun-Bold.woff2") format("woff2");
+  font-weight: 700; /* Bold */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Sarabun";
+  src: url("./assets/fonts/Sarabun-Light.woff2") format("woff2");
+  font-weight: 300; /* Light */
+  font-style: normal;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "Sarabun";
+  font-weight: 400;
 }

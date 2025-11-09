@@ -1,7 +1,11 @@
+import AppLayout from "./Layout";
+
 export default function App() {
   return (
-    <>
-      <h1>Hello React</h1>
-    </>
+    <AppLayout>
+      <main>
+        <h1>Hello React</h1>
+      </main>
+    </AppLayout>
   );
 }
