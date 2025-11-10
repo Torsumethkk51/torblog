@@ -1,137 +1,147 @@
-import { useState, type ChangeEvent } from "react";
-import type { Element, ElementType, Post, Size } from "../types/post";
+import { useReducer } from "react";
+import type { Element, ElementType, Post, PostAction, UpdateListAction } from "../types/post";
 import AppLayout from "../Layout";
 
 export default function CreatePost() {
-  const [post, setPost] = useState<Post>({
+  function postListReducer(list: string[], action: UpdateListAction): string[] {
+    switch (action.type) {
+      case "addListItem":
+        return [...list, ""];
+      case "updateListItem":
+        return [...list].map((item, index) => {
+          if (action.childIndex !== undefined && (index === action.childIndex)) {
+            return action.updateText!;
+          }
+          return item;
+        });
+      case "removeListItem":
+        return [...list].filter((_, index) => {
+          return index !== action.childIndex;
+        })
+      default:
+        return list;
+    }
+  }
+
+  function postReducer(postState: Post, action: PostAction): Post {
+    switch (action.type) {
+      case "updateTitle":
+        return {
+          ...postState,
+          title: action.newTitle
+        }
+      case "updateDescription":
+        return {
+          ...postState,
+          description: action.newDescription
+        }
+      case "addElement": {
+        return {
+          ...postState,
+          content: [...postState.content, action.newElement]
+        }
+      }
+      case "removeElement":
+        return {
+          ...postState,
+          content: [...postState.content.filter((_, index) => {
+            return index !== action.removeId;
+          })]
+        }
+      case "updateHeading": {
+        return {
+          ...postState,
+          content: [...postState.content].map((content, index) => {
+            if (index === action.updateId && content.name === "heading") {
+              if (action.updateText !== undefined) {
+                content.text = action.updateText;
+              } else if (action.updateSize !== undefined) {
+                content.size = action.updateSize;
+              }
+            }
+            return content;
+          })
+        }
+      }
+      case "updateParagraph": {
+        return {
+          ...postState,
+          content: [...postState.content].map((content, index) => {
+            if (index === action.updateId && content.name === "paragraph") {
+              content.text = action.updateText;
+            }
+            return content;
+          })
+        }
+      }
+      case "updateLink": {
+        return {
+          ...postState,
+          content: [...postState.content].map((content, index) => {
+            if (index === action.updateId && content.name === "link") {
+              if (action.updateText !== undefined) {
+                content.text = action.updateText;
+              } else if (action.updateHref !== undefined) {
+                content.href = action.updateHref;
+              }
+            }
+            return content;
+          })
+        }
+      }
+      case "updateList":
+        return {
+          ...postState,
+          content: [...postState.content].map((content, index) => {
+            if (content.name === "list" && index === action.state.parentIndex) {
+              const newContent = { ...content }
+              newContent.list = postListReducer(content.list, action.action);
+              return newContent;
+            }
+            return content
+          })
+        }
+      default:
+        throw new Error("This case is not handling at postReducer");
+    }
+  }
+
+  const [postState, postDispatch] = useReducer(postReducer, {
     title: "",
     description: "",
     content: []
   });
 
-  function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
-    setPost({
-      ...post,
-      [e.target.name]: e.target.value
+  function addElement(newElement: ElementType) {
+    postDispatch({ 
+      type: "addElement",
+      newElement: newElement
     })
   }
 
-  function handlePostElementValueChange(targetIndex: number, value: string, link?: string, listItemIndex?: number) {
-    const newPostContent = [...post.content];
-    console.log(value, listItemIndex);
-    if (value || value === "") {
-      if (listItemIndex !== undefined) {
-        console.log("test")
-        const newPostContentList = [...newPostContent[targetIndex].value];
-        newPostContentList[listItemIndex] = value;
-        newPostContent[targetIndex].value = newPostContentList;
-      } else {
-        newPostContent[targetIndex].value = value;
-      }
-    }
-    if (link) {
-      newPostContent[targetIndex].link = link;
-    }
-    setPost(prev => {
-      return {
-        ...prev,
-        content: newPostContent
-      }
-    })
-  }
-
-  function addPostListItem(targetIndex: number) {
-    const newPostContent = [...post.content];
-    const newContentList = [...newPostContent[targetIndex].value];
-    newContentList.push("");
-    newPostContent[targetIndex].value = newContentList;
-    setPost(prev => {
-      return {
-        ...prev,
-        content: newPostContent
-      }
-    });
-  }
-
-  function removePostListItem(targetIndex: number, listItemIndex: number) {
-    const newPostContent = [...post.content];
-    const newPostListContentList = [...newPostContent[targetIndex].value];
-    const filtered = newPostListContentList.filter((_, idx) => {
-      return idx !== listItemIndex;
-    });
-    newPostContent[targetIndex].value = filtered;
-    setPost(prev => {
-      return {
-        ...prev,
-        content: newPostContent
-      }
-    });
-  }
-
-  function addPostElement(elementType: ElementType, size?: Size) {
-    const newContent = [...post.content];
-    
-    switch (elementType) {
-      case "heading":
-        newContent.push({
-          element: "heading",
-          size: size,
-          value: ""
-        });
-        break;
-      case "paragraph":
-        newContent.push({
-          element: "paragraph",
-          value: ""
-        });
-        break;
-      case "link":
-        newContent.push({
-          element: "link",
-          value: ""
-        });
-        break;
-      case "list":
-        newContent.push({
-          element: "list",
-          value: []
-        });
-        break;
-      default:
-        return;
-    }
-
-    setPost({
-      ...post,
-      content: newContent
-    })
-  }
-
-  function removePostElement(targetIndex: number) {
-    const newPostContent = [...post.content];
-    const filtered = newPostContent.filter((_, idx) => {
-      return idx !== targetIndex;
-    });
-    setPost(prev => {
-      return {
-        ...prev,
-        content: filtered
-      }
+  function removeElement(removeId: number) {
+    postDispatch({
+      type: "removeElement",
+      removeId: removeId
     });
   }
 
   function changeToHTML(element: Element, idx: number) {
-    switch (element.element) {
+    switch (element.name) {
       case "heading":
         return (
           <div key={idx}>
             <textarea 
-              onChange={(e) => handlePostElementValueChange(idx, e.target.value)}
+              onChange={(e) => postDispatch({
+                type: "updateHeading", 
+                updateId: idx,
+                updateText: e.target.value
+              })}
               placeholder="Heading text"
-              value={element.value}
+              value={element.text}
             />
             <button
-              onClick={() => removePostElement(idx)}
+              onClick={() => removeElement(idx)}
             >
               Remove
             </button>
@@ -141,13 +151,17 @@ export default function CreatePost() {
         return (
           <div key={idx}>
             <textarea 
-              onChange={(e) => handlePostElementValueChange(idx, e.target.value)}
+              onChange={(e) => postDispatch({
+                type: "updateParagraph", 
+                updateId: idx,
+                updateText: e.target.value
+              })}
               placeholder="Paragraph text"
-              value={element.value}
+              value={element.text}
               key={idx}
             />
             <button
-              onClick={() => removePostElement(idx)}
+              onClick={() => removeElement(idx)}
             >
               Remove
             </button>
@@ -158,19 +172,19 @@ export default function CreatePost() {
           <div key={idx}>
             <div>
               <textarea 
-                onChange={(e) => handlePostElementValueChange(idx, post.content[idx].value.toString(), e.target.value)}
+                onChange={(e) => postDispatch({ type: "updateLink", updateId: idx ,updateHref: e.target.value })}
                 placeholder="Link Url"
-                value={element.link}
+                value={element.href}
               />
               <textarea 
-                onChange={(e) => handlePostElementValueChange(idx, e.target.value ,post.content[idx].link)}
+                onChange={(e) => postDispatch({ type: "updateLink", updateId: idx ,updateText: e.target.value })}
                 placeholder="Link Placeholder"
-                value={element.value}
+                value={element.text}
               />
             </div>
             <div>
               <button
-                onClick={() => removePostElement(idx)}
+                onClick={() => removeElement(idx)}
               >
                 Remove
               </button>
@@ -182,28 +196,58 @@ export default function CreatePost() {
           <div key={idx}>
             <div>
               <button
-                onClick={() => addPostListItem(idx)}
+                onClick={() => postDispatch({
+                  type: "updateList",
+                  state: {
+                    parentIndex: idx
+                  },
+                  action: {
+                    type: "addListItem"
+                  }
+                })}
               >
                 Add Item
               </button>
               <button
-                  onClick={() => removePostElement(idx)}
+                  onClick={() => removeElement(idx)}
                 >
                   Remove
                 </button>
             </div>
             <ul>
-              {[...element.value].map((item, itemIndex) => {
-                console.log(item);
+              {element.list.map((item, itemIndex) => {
                 return (
                   <li key={itemIndex}>
                     <textarea 
-                      onChange={(e) => handlePostElementValueChange(idx, e.target.value , undefined, itemIndex)}
+                      onChange={(e) => {
+                        postDispatch({
+                        type: "updateList",
+                        state: {
+                          parentIndex:  idx,
+                        },
+                        action: {
+                          type: "updateListItem",
+                          childIndex: itemIndex,
+                          updateText: e.target.value
+                        }
+                      })
+                      }}
                       placeholder={`List Item ${itemIndex + 1}`}
                       value={item}
                     />
                     <button
-                      onClick={() => removePostListItem(idx, itemIndex)}
+                      onClick={() => {
+                        postDispatch({
+                          type: "updateList",
+                          state: {
+                            parentIndex:  idx,
+                          },
+                          action: {
+                            type: "removeListItem",
+                            childIndex: itemIndex,
+                          }
+                        })
+                      }}
                     >
                       Remove
                     </button>
@@ -225,16 +269,30 @@ export default function CreatePost() {
 
         <div className="tools-bar">
 
-          <button onClick={() => addPostElement("heading", 1)}>
+          <button onClick={() => addElement({
+            name: "heading",
+            text: "",
+            size: 1
+          })}>
             Heading
           </button>
-          <button onClick={() => addPostElement("paragraph")}>
+          <button onClick={() => addElement({
+            name: "paragraph",
+            text: ""
+          })}>
             Paragraph
           </button>
-          <button onClick={() => addPostElement("link")}>
+          <button onClick={() => addElement({
+            name: "link",
+            text: "",
+            href: ""
+          })}>
             Link
           </button>
-          <button onClick={() => addPostElement("list")}>
+          <button onClick={() => addElement({
+            name: "list",
+            list: []
+          })}>
             List
           </button>
         </div>
@@ -243,20 +301,20 @@ export default function CreatePost() {
           <div>
             <textarea
               name="title"
-              onChange={handleChange}
+              onChange={(e) => postDispatch({ type: "updateTitle", newTitle: e.target.value })}
               placeholder="Your post title here"
-              value={post.title}
+              value={postState.title}
             />
           </div>
           <div>
             <textarea
               name="description"
-              onChange={handleChange}
+              onChange={(e) => postDispatch({ type: "updateDescription", newDescription: e.target.value })}
               placeholder="Your post description here"
-              value={post.description}
+              value={postState.description}
             />
           </div>
-          {post.content.map((element, index) => {
+          {postState.content.map((element, index) => {
             return changeToHTML(element, index)
           })}
         </section>
