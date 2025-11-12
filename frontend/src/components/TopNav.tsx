@@ -7,6 +7,8 @@ export default function TopNav() {
       <nav>
         <Link to={"/"}>Home</Link>
         <Link to={"/create-post"}>Create Post</Link>
+        <Link to={"/login"}>Login</Link>
+        <Link to={"/sign-up"}>Sign Up</Link>
       </nav>
     </header>
   );

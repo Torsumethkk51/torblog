@@ -4,6 +4,8 @@ import './index.css'
 import App from './App.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import CreatePost from './pages/CreatePost.tsx'
+import Login from './pages/Login.tsx'
+import SignUp from './pages/SignUp.tsx'
 
 const router = createBrowserRouter([
   {
@@ -13,6 +15,14 @@ const router = createBrowserRouter([
   {
     path: "/create-post",
     element: <CreatePost/>
+  },
+  {
+    path: "/login",
+    element: <Login/>
+  },
+  {
+    path: "/sign-up",
+    element: <SignUp/>
   }
 ]);
 

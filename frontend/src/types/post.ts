@@ -69,4 +69,13 @@ export type PostAction = {
   type: "updateList"
   state: UpdateListState
   action: UpdateListAction
+} | {
+  type: "reset"
+}
+
+export type ErrorFrom = "title" | "content"
+
+export type CreatePostError = {
+  from: ErrorFrom
+  message: string
 }

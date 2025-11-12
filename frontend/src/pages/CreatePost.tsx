@@ -1,5 +1,5 @@
-import { useReducer } from "react";
-import type { Element, ElementType, Post, PostAction, UpdateListAction } from "../types/post";
+import { useEffect, useReducer, useState } from "react";
+import type { CreatePostError, Element, ElementType, ErrorFrom, Post, PostAction, UpdateListAction } from "../types/post";
 import AppLayout from "../Layout";
 
 export default function CreatePost() {
@@ -17,7 +17,7 @@ export default function CreatePost() {
       case "removeListItem":
         return [...list].filter((_, index) => {
           return index !== action.childIndex;
-        })
+        });
       default:
         return list;
     }
@@ -101,6 +101,12 @@ export default function CreatePost() {
             return content
           })
         }
+        case "reset":
+          return {
+            title: "",
+            description: "",
+            content: []
+          }
       default:
         throw new Error("This case is not handling at postReducer");
     }
@@ -111,6 +117,7 @@ export default function CreatePost() {
     description: "",
     content: []
   });
+  const [createPostErrors, setCreatePostErrors] = useState<CreatePostError[]>([]);
 
   function addElement(newElement: ElementType) {
     postDispatch({ 
@@ -261,11 +268,66 @@ export default function CreatePost() {
         return;
     }
   }
+
+  function addError(from: ErrorFrom, message: string) {
+    const findExist = createPostErrors.filter(error => error.from === from);
+    if (findExist.length > 0) return;
+    setCreatePostErrors(prev => [
+      ...prev,
+      {
+        from: from,
+        message: message
+      }
+    ]);
+  }
+
+  useEffect(() => {
+    resetError();
+  }, [postState]);
+
+  function resetError() {
+    setCreatePostErrors([]);
+  }
+
+  function checkPostBeforePublish(): boolean {
+    if (postState.title === "") {
+      addError("title", "The post title must not empty.");
+      return false;
+    }
+    if (postState.content.length === 0) {
+      addError("content", "The post content must not empty.");
+      return false;
+    }
+    return true;
+  }
+
+  function renderError(from: ErrorFrom) {
+    if (createPostErrors.length === 0) return;
+    const errorCard = createPostErrors.map((error, index) => {
+      if (error.from !== from) return;
+      return (
+        <div key={index}>
+          <p>{error.message}</p>
+        </div>
+      )
+    });
+    return errorCard;
+  }
+
+  function publishPost() {
+    if (checkPostBeforePublish()) {
+      console.log(postState);
+      postDispatch({ type: "reset" });
+    }
+  }
   
   return (
     <AppLayout>
       <main>
         <h1>Let's create your post!</h1>
+        <div className="publish-button">
+          <button onClick={publishPost}>Publish</button>
+        </div>
 
         <div className="tools-bar">
 
@@ -299,8 +361,10 @@ export default function CreatePost() {
 
         <section className="result-preview">
           <div>
+            <div>
+              {renderError("title")}
+            </div>
             <textarea
-              name="title"
               onChange={(e) => postDispatch({ type: "updateTitle", newTitle: e.target.value })}
               placeholder="Your post title here"
               value={postState.title}
@@ -308,15 +372,19 @@ export default function CreatePost() {
           </div>
           <div>
             <textarea
-              name="description"
               onChange={(e) => postDispatch({ type: "updateDescription", newDescription: e.target.value })}
               placeholder="Your post description here"
               value={postState.description}
             />
           </div>
-          {postState.content.map((element, index) => {
-            return changeToHTML(element, index)
-          })}
+          <div>
+            {renderError("title")}
+          </div>
+          <div>
+            {postState.content.map((element, index) => {
+              return changeToHTML(element, index)
+            })}
+          </div>
         </section>
       </main>
     </AppLayout>
